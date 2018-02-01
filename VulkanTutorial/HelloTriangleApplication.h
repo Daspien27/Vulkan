@@ -13,6 +13,20 @@ void DestroyDebugReportCallbackEXT (
    VkDebugReportCallbackEXT callback,
    const VkAllocationCallbacks* pAllocator);
 
+struct QueueFamilyIndices
+{
+   int graphicsFamily;
+
+   QueueFamilyIndices () : graphicsFamily (-1) {}
+
+   bool isComplete ()
+   {
+      return graphicsFamily >= 0;
+   }
+};
+
+
+
 class HelloTriangleApplication
 {
 private:
@@ -20,6 +34,7 @@ private:
    GLFWwindow* window;
    VkInstance instance;
    VkDebugReportCallbackEXT callback;
+   VkPhysicalDevice physicalDevice;
 
 public:
    HelloTriangleApplication ();
@@ -45,6 +60,9 @@ private:
    
    void setupDebugCallback ();
    
+   void pickPhysicalDevice ();
+   bool isDeviceSuitable (VkPhysicalDevice device);
+   QueueFamilyIndices findQueueFamilies (VkPhysicalDevice device);
    void mainLoop ();
 
    void cleanup ();

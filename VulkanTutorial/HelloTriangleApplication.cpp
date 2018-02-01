@@ -124,6 +124,23 @@ std::vector<const char *> getRequiredExtensions ()
    return extensions;
 }
 
+void PrintAvailablePhysicalDevices (const VkInstance instance)
+{
+   uint32_t deviceCount = 0;
+   vkEnumeratePhysicalDevices (instance, &deviceCount, nullptr);
+   std::vector<VkPhysicalDevice> devices (deviceCount);
+   vkEnumeratePhysicalDevices (instance, &deviceCount, devices.data ());
+
+   std::cout << "available physical devices: " << std::endl;
+
+   for (const auto& device : devices)
+   {
+      VkPhysicalDeviceProperties deviceProperties;
+      vkGetPhysicalDeviceProperties (device, &deviceProperties);
+      
+      std::cout << "\t" << deviceProperties.deviceName << std::endl;
+   }
+}
 VkResult CreateDebugReportCallbackEXT (VkInstance instance, const VkDebugReportCallbackCreateInfoEXT * pCreateInfo, const VkAllocationCallbacks * pAllocator, VkDebugReportCallbackEXT * pCallback)
 {
    auto func = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr (instance, "vkCreateDebugReportCallbackEXT");
@@ -150,7 +167,8 @@ void DestroyDebugReportCallbackEXT (
 }
 
 
-HelloTriangleApplication::HelloTriangleApplication ()
+HelloTriangleApplication::HelloTriangleApplication () : 
+   physicalDevice(VK_NULL_HANDLE)
 {
 }
 
@@ -197,6 +215,7 @@ void HelloTriangleApplication::initVulkan ()
 {
    createInstance ();
    setupDebugCallback ();
+   pickPhysicalDevice ();
 }
 
 void HelloTriangleApplication::createInstance ()
@@ -261,6 +280,75 @@ void HelloTriangleApplication::setupDebugCallback ()
       throw std::runtime_error ("failed to set up debug callback!");
    }
 }
+
+void HelloTriangleApplication::pickPhysicalDevice ()
+{
+   uint32_t deviceCount = 0;
+   vkEnumeratePhysicalDevices (instance, &deviceCount, nullptr);
+
+   if (deviceCount == 0)
+   {
+      throw std::runtime_error ("failed to find GPUs with Vulkan support!");
+   }
+
+   PrintAvailablePhysicalDevices (instance);
+
+   std::vector<VkPhysicalDevice> devices (deviceCount);
+   vkEnumeratePhysicalDevices (instance, &deviceCount, devices.data ());
+
+   for (const auto& device : devices)
+   {
+      if (isDeviceSuitable (device))
+      {
+         physicalDevice = device;
+         break;
+      }
+   }
+
+   if (physicalDevice == VK_NULL_HANDLE)
+   {
+      throw std::runtime_error ("failed to find a suitable GPU!");
+   }
+
+}
+
+bool HelloTriangleApplication::isDeviceSuitable (VkPhysicalDevice device)
+{
+   QueueFamilyIndices indices = findQueueFamilies (device);
+
+   return indices.isComplete ();
+}
+
+inline QueueFamilyIndices HelloTriangleApplication::findQueueFamilies (VkPhysicalDevice device)
+{
+   QueueFamilyIndices indices;
+
+   uint32_t queueFamilyCount = 0;
+   vkGetPhysicalDeviceQueueFamilyProperties (device, &queueFamilyCount, nullptr);
+   std::vector<VkQueueFamilyProperties> queueFamilies (queueFamilyCount);
+   vkGetPhysicalDeviceQueueFamilyProperties (device, &queueFamilyCount, queueFamilies.data ());
+
+   int i = 0;
+   for (const auto& queueFamily : queueFamilies)
+   {
+      if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+      {
+         indices.graphicsFamily = i;
+      }
+
+      if (indices.isComplete ())
+      {
+         break;
+      }
+
+      ++i;
+   }
+
+
+   return indices;
+}
+
+
 
 void HelloTriangleApplication::mainLoop ()
 {
