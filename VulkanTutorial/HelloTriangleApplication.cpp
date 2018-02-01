@@ -10,6 +10,145 @@
 const int WIDTH = 800;
 const int HEIGHT = 600;
 
+const std::vector<const char*> validationLayers = {"VK_LAYER_LUNARG_standard_validation"};
+
+#ifdef NDEBUG
+   const bool enableValidationLayers = false
+#else
+   const bool enableValidationLayers = true;
+#endif
+
+void checkValidationLayerSupport ()
+{
+   uint32_t layerCount;
+   vkEnumerateInstanceLayerProperties (&layerCount, nullptr);
+   std::vector<VkLayerProperties> availableLayers (layerCount);
+   vkEnumerateInstanceLayerProperties (&layerCount, availableLayers.data ());
+
+   std::vector<std::string> MissingValidationLayers;
+   for (const auto& validationLayer : validationLayers)
+   {
+      auto matchExtension = [&] (const VkLayerProperties& layerProp) { return strcmp (layerProp.layerName, validationLayer) == 0; };
+
+      auto findIfRequiredExtensionSupported = std::find_if (std::begin (availableLayers), std::end (availableLayers), matchExtension);
+
+      if (findIfRequiredExtensionSupported == std::end (availableLayers))
+      {
+         MissingValidationLayers.emplace_back (validationLayer);
+      }
+   }
+
+   if (!MissingValidationLayers.empty ())
+   {
+      throw std::runtime_error ("Validation layers requested, but not available! Missing: \r\n\t"
+                                + std::accumulate (std::next (MissingValidationLayers.begin ()), MissingValidationLayers.end (), MissingValidationLayers[0],
+                                                   [] (std::string accum, std::string next) { return accum + "\r\n\t" + next; }));
+   }
+}
+
+void PrintSupportedValidationLayers ()
+{
+   uint32_t layerCount;
+   vkEnumerateInstanceLayerProperties (&layerCount, nullptr);
+   std::vector<VkLayerProperties> availableLayers (layerCount);
+   vkEnumerateInstanceLayerProperties (&layerCount, availableLayers.data ());
+
+   std::cout << "available validation layers: " << std::endl;
+
+   for (const auto& layer : availableLayers)
+   {
+      std::cout << "\t" << layer.layerName << std::endl;
+   }
+}
+
+void checkInstanceExtensionSupport (std::vector<const char *> RequiredExtensions)
+{
+   uint32_t supportedExtensionCount = 0;
+   vkEnumerateInstanceExtensionProperties (nullptr, &supportedExtensionCount, nullptr);
+   std::vector<VkExtensionProperties> SupportedExtensions (supportedExtensionCount);
+   vkEnumerateInstanceExtensionProperties (nullptr, &supportedExtensionCount, SupportedExtensions.data ());
+
+   
+   std::vector<std::string> MissingExtensions;
+
+   for (const auto& RequiredExtension : RequiredExtensions)
+   {
+      auto matchExtension = [&] (const VkExtensionProperties& extensionProp) { return strcmp (extensionProp.extensionName, RequiredExtension) == 0; };
+
+      auto findIfRequiredExtensionSupported = std::find_if (std::begin (SupportedExtensions), std::end (SupportedExtensions), matchExtension);
+
+      if (findIfRequiredExtensionSupported == std::end (SupportedExtensions))
+      {
+         MissingExtensions.emplace_back (RequiredExtension);
+      }
+   }
+   if (!MissingExtensions.empty ())
+   {
+      throw std::runtime_error ("A required extension is not supported! Missing: \r\n\t"
+                                + std::accumulate (std::next (MissingExtensions.begin ()), MissingExtensions.end (), MissingExtensions[0],
+                                                   [] (std::string accum, std::string next) { return accum + "\r\n\t" + next; }));
+   }
+}
+
+void PrintSupportedInstanceExtensions ()
+{
+   uint32_t extensionCount = 0;
+   vkEnumerateInstanceExtensionProperties (nullptr, &extensionCount, nullptr);
+   std::vector<VkExtensionProperties> extensions (extensionCount);
+   vkEnumerateInstanceExtensionProperties (nullptr, &extensionCount, extensions.data ());
+
+   std::cout << "available extensions: " << std::endl;
+
+   for (const auto& extension : extensions)
+   {
+      std::cout << "\t" << extension.extensionName << std::endl;
+   }
+}
+
+std::vector<const char *> getRequiredExtensions ()
+{
+   std::vector<const char *> extensions;
+
+   unsigned int glfwExtensionCount = 0;
+   const char** glfwExtensions;
+
+   glfwExtensions = glfwGetRequiredInstanceExtensions (&glfwExtensionCount);
+
+   extensions.insert (extensions.end (), glfwExtensions, glfwExtensions + glfwExtensionCount);
+
+   if (enableValidationLayers)
+   {
+      extensions.push_back (VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+   }
+
+   return extensions;
+}
+
+VkResult CreateDebugReportCallbackEXT (VkInstance instance, const VkDebugReportCallbackCreateInfoEXT * pCreateInfo, const VkAllocationCallbacks * pAllocator, VkDebugReportCallbackEXT * pCallback)
+{
+   auto func = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr (instance, "vkCreateDebugReportCallbackEXT");
+   if (func != nullptr)
+   {
+      return func (instance, pCreateInfo, pAllocator, pCallback);
+   }
+   else
+   {
+      return VK_ERROR_EXTENSION_NOT_PRESENT;
+   }
+}
+
+void DestroyDebugReportCallbackEXT (
+   VkInstance instance,
+   VkDebugReportCallbackEXT callback,
+   const VkAllocationCallbacks * pAllocator)
+{
+   auto func = (PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr (instance, "vkDestroyDebugReportCallbackEXT");
+   if (func != nullptr)
+   {
+      func (instance, callback, pAllocator);
+   }
+}
+
 
 HelloTriangleApplication::HelloTriangleApplication ()
 {
@@ -28,6 +167,21 @@ void HelloTriangleApplication::run ()
    cleanup ();
 }
 
+VKAPI_ATTR VkBool32 VKAPI_CALL HelloTriangleApplication::debugCallback (
+   VkDebugReportFlagsEXT flags, 
+   VkDebugReportObjectTypeEXT objType, 
+   uint64_t obj, 
+   size_t location, 
+   int32_t code, 
+   const char * layerPrefix, 
+   const char * msg, 
+   void * userData)
+{
+   std::cerr << "validation layer: " << msg << std::endl;
+
+   return VK_FALSE;
+}
+
 void HelloTriangleApplication::initWindow ()
 {
    glfwInit ();
@@ -42,10 +196,18 @@ void HelloTriangleApplication::initWindow ()
 void HelloTriangleApplication::initVulkan ()
 {
    createInstance ();
+   setupDebugCallback ();
 }
 
 void HelloTriangleApplication::createInstance ()
 {
+   if (enableValidationLayers)
+   {
+      PrintSupportedValidationLayers ();
+      checkValidationLayerSupport ();
+   }
+
+
    VkApplicationInfo appInfo = {};
    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
    appInfo.pApplicationName = "Hello Triangle";
@@ -58,19 +220,25 @@ void HelloTriangleApplication::createInstance ()
    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
    createInfo.pApplicationInfo = &appInfo;
 
-   unsigned int glfwExtensionCount = 0;
-   const char** glfwExtensions;
+   PrintSupportedInstanceExtensions ();
 
-   PrintSupportedExtensions ();
+   auto extensions = getRequiredExtensions ();
 
-   glfwExtensions = glfwGetRequiredInstanceExtensions (&glfwExtensionCount);
-
-   EnsureRequiredExtensionsAreSupported (glfwExtensions, glfwExtensionCount);
+   checkInstanceExtensionSupport (extensions);
    
-   createInfo.enabledExtensionCount = glfwExtensionCount;
-   createInfo.ppEnabledExtensionNames = glfwExtensions;
+   createInfo.enabledExtensionCount = static_cast<uint32_t> (extensions.size ());
+   createInfo.ppEnabledExtensionNames = extensions.data ();
    
-   createInfo.enabledLayerCount = 0;
+   if (enableValidationLayers)
+   {
+      createInfo.enabledLayerCount = static_cast<uint32_t> (validationLayers.size ());
+      createInfo.ppEnabledLayerNames = validationLayers.data ();
+   }
+   else
+   {
+      createInfo.enabledLayerCount = 0;
+   }
+
 
    if (vkCreateInstance (&createInfo, nullptr, &instance) != VK_SUCCESS)
    {
@@ -79,49 +247,20 @@ void HelloTriangleApplication::createInstance ()
 
 }
 
-void HelloTriangleApplication::PrintSupportedExtensions ()
+void HelloTriangleApplication::setupDebugCallback ()
 {
-   uint32_t extensionCount = 0;
-   vkEnumerateInstanceExtensionProperties (nullptr, &extensionCount, nullptr);
-   std::vector<VkExtensionProperties> extensions (extensionCount);
-   vkEnumerateInstanceExtensionProperties (nullptr, &extensionCount, extensions.data ());
+   if (!enableValidationLayers) return;
 
-   std::cout << "available extensions: " << std::endl;
+   VkDebugReportCallbackCreateInfoEXT createInfo = {};
+   createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+   createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+   createInfo.pfnCallback = debugCallback;
 
-   for (const auto& extension : extensions)
+   if (CreateDebugReportCallbackEXT (instance, &createInfo, nullptr, &callback) != VK_SUCCESS)
    {
-      std::cout << "\t" << extension.extensionName << std::endl;
+      throw std::runtime_error ("failed to set up debug callback!");
    }
 }
-
-void HelloTriangleApplication::EnsureRequiredExtensionsAreSupported (const char ** RequiredExtensions, int NumRequiredExtensions)
-{
-   uint32_t extensionCount = 0;
-   vkEnumerateInstanceExtensionProperties (nullptr, &extensionCount, nullptr);
-   std::vector<VkExtensionProperties> extensions (extensionCount);
-   vkEnumerateInstanceExtensionProperties (nullptr, &extensionCount, extensions.data ());
-
-   std::vector<std::string> MissingExtensions;
-   for (unsigned int i = 0; i < NumRequiredExtensions; ++i)
-   {
-      auto& RequiredExtension = RequiredExtensions[i];
-      auto matchExtension = [&] (const VkExtensionProperties& extensionProp) { return strcmp (extensionProp.extensionName, RequiredExtension) == 0; };
-
-      auto findIfRequiredExtensionSupported = std::find_if (std::begin (extensions), std::end (extensions), matchExtension);
-
-      if (findIfRequiredExtensionSupported == std::end (extensions))
-      {
-         MissingExtensions.emplace_back (RequiredExtension);
-      }
-   }
-   if (!MissingExtensions.empty ())
-   {
-      throw std::runtime_error ("A required extension is not supported! Missing: \r\n\t"
-                                + std::accumulate (std::next (MissingExtensions.begin ()), MissingExtensions.end (), MissingExtensions[0],
-                                                   [] (std::string accum, std::string next) { return accum + "\r\n\t" + next; }));
-   }
-}
-
 
 void HelloTriangleApplication::mainLoop ()
 {
@@ -133,6 +272,7 @@ void HelloTriangleApplication::mainLoop ()
 
 void HelloTriangleApplication::cleanup ()
 {
+   DestroyDebugReportCallbackEXT (instance, callback, nullptr);
    vkDestroyInstance (instance, nullptr);
 
    glfwDestroyWindow (window);
