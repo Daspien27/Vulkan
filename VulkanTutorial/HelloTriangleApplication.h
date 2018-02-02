@@ -35,6 +35,8 @@ private:
    VkInstance instance;
    VkDebugReportCallbackEXT callback;
    VkPhysicalDevice physicalDevice;
+   VkDevice device;
+   VkQueue graphicsQueue;
 
 public:
    HelloTriangleApplication ();
@@ -63,6 +65,10 @@ private:
    void pickPhysicalDevice ();
    bool isDeviceSuitable (VkPhysicalDevice device);
    QueueFamilyIndices findQueueFamilies (VkPhysicalDevice device);
+
+
+   void createLogicalDevice ();
+
    void mainLoop ();
 
    void cleanup ();
