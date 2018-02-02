@@ -3,6 +3,8 @@
 #define GLFW_INCLUDE_VULKAN //Includes <vulkan\vulkan.h> indicates that glfw is to load in Vulkan
 #include <GLFW/glfw3.h>
 
+#include <set>
+
 VkResult CreateDebugReportCallbackEXT (
    VkInstance instance,
    const VkDebugReportCallbackCreateInfoEXT* pCreateInfo,
@@ -16,12 +18,13 @@ void DestroyDebugReportCallbackEXT (
 struct QueueFamilyIndices
 {
    int graphicsFamily;
+   int presentFamily;
 
    QueueFamilyIndices () : graphicsFamily (-1) {}
 
    bool isComplete ()
    {
-      return graphicsFamily >= 0;
+      return graphicsFamily >= 0 && presentFamily >= 0;
    }
 };
 
@@ -34,9 +37,11 @@ private:
    GLFWwindow* window;
    VkInstance instance;
    VkDebugReportCallbackEXT callback;
+   VkSurfaceKHR surface;
    VkPhysicalDevice physicalDevice;
    VkDevice device;
    VkQueue graphicsQueue;
+   VkQueue presentQueue;
 
 public:
    HelloTriangleApplication ();
@@ -62,6 +67,8 @@ private:
    
    void setupDebugCallback ();
    
+   void createSurface ();
+
    void pickPhysicalDevice ();
    bool isDeviceSuitable (VkPhysicalDevice device);
    QueueFamilyIndices findQueueFamilies (VkPhysicalDevice device);
