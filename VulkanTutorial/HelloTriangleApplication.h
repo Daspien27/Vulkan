@@ -3,6 +3,7 @@
 #define GLFW_INCLUDE_VULKAN //Includes <vulkan\vulkan.h> indicates that glfw is to load in Vulkan
 #include <GLFW/glfw3.h>
 
+#include <vector>
 #include <set>
 
 VkResult CreateDebugReportCallbackEXT (
@@ -28,6 +29,12 @@ struct QueueFamilyIndices
    }
 };
 
+struct SwapChainSupportDetails
+{
+   VkSurfaceCapabilitiesKHR capabilities;
+   std::vector<VkSurfaceFormatKHR> formats;
+   std::vector<VkPresentModeKHR> presentModes;
+};
 
 
 class HelloTriangleApplication
@@ -42,6 +49,11 @@ private:
    VkDevice device;
    VkQueue graphicsQueue;
    VkQueue presentQueue;
+
+   VkSwapchainKHR swapChain;
+   std::vector<VkImage> swapChainImages;
+   VkFormat swapChainImageFormat;
+   VkExtent2D swapChainExtent;
 
 public:
    HelloTriangleApplication ();
@@ -72,9 +84,15 @@ private:
    void pickPhysicalDevice ();
    bool isDeviceSuitable (VkPhysicalDevice device);
    QueueFamilyIndices findQueueFamilies (VkPhysicalDevice device);
-
-
+   
    void createLogicalDevice ();
+
+   void createSwapChain ();
+   SwapChainSupportDetails querySwapChainSupport (VkPhysicalDevice device);
+   VkSurfaceFormatKHR chooseSwapSurfaceFormat (const std::vector<VkSurfaceFormatKHR>& availableFormats);
+   VkPresentModeKHR chooseSwapPresentMode (const std::vector<VkPresentModeKHR>& availablePresentModes);
+   VkExtent2D chooseSwapExtent (const VkSurfaceCapabilitiesKHR& capabilities);
+
 
    void mainLoop ();
 
