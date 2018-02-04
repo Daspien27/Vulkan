@@ -58,6 +58,7 @@ private:
 
    VkRenderPass renderPass;
    VkPipelineLayout pipelineLayout;
+   VkPipeline graphicsPipeline;
 
 public:
    HelloTriangleApplication ();
