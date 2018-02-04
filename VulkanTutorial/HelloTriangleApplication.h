@@ -1,10 +1,23 @@
 #pragma once
 
+#include <array>
+#include <vector>
+#include <set>
+
 #define GLFW_INCLUDE_VULKAN //Includes <vulkan\vulkan.h> indicates that glfw is to load in Vulkan
 #include <GLFW/glfw3.h>
 
-#include <vector>
-#include <set>
+#include <glm/glm.hpp>
+
+struct Vertex
+{
+   glm::vec2 pos;
+   glm::vec3 color;
+
+   static VkVertexInputBindingDescription getBindingDescription();
+   static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions ();
+
+};
 
 VkResult CreateDebugReportCallbackEXT (
    VkInstance instance,

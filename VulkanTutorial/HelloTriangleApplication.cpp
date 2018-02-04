@@ -20,6 +20,12 @@ const std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NA
    const bool enableValidationLayers = true;
 #endif
 
+const std::vector<Vertex> vertices = {
+   {{0.0f, -0.5}, {1.0f,0.0f,0.0f}},
+   {{0.5, 0.5f},{0.0f,1.0f,0.0f}},
+   {{-0.5f,0.5f},{0.0f,0.0f,1.0f}}
+};
+
 void checkValidationLayerSupport ()
 {
    uint32_t layerCount;
@@ -703,10 +709,14 @@ void HelloTriangleApplication::createGraphicsPipeline ()
 
    VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-   vertexInputInfo.vertexBindingDescriptionCount = 0;
-   vertexInputInfo.pVertexBindingDescriptions = nullptr;
-   vertexInputInfo.vertexAttributeDescriptionCount = 0;
-   vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+   
+   auto bindingDescription = Vertex::getBindingDescription ();
+   auto attributeDescription = Vertex::getAttributeDescriptions ();
+
+   vertexInputInfo.vertexBindingDescriptionCount = 1;
+   vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+   vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t> (attributeDescription.size ());
+   vertexInputInfo.pVertexAttributeDescriptions = attributeDescription.data ();
 
    VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -1122,4 +1132,32 @@ void HelloTriangleApplication::cleanup ()
    glfwDestroyWindow (window);
 
    glfwTerminate ();
+}
+
+VkVertexInputBindingDescription Vertex::getBindingDescription ()
+{
+   VkVertexInputBindingDescription bindingDescription = {};
+
+   bindingDescription.binding = 0;
+   bindingDescription.stride = sizeof (Vertex);
+   bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+   return bindingDescription;
+}
+
+std::array<VkVertexInputAttributeDescription, 2> Vertex::getAttributeDescriptions ()
+{
+   std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = {};
+
+   attributeDescriptions[0].binding = 0;
+   attributeDescriptions[0].location = 0;
+   attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+   attributeDescriptions[0].offset = offsetof (Vertex, pos);
+
+   attributeDescriptions[1].binding = 0;
+   attributeDescriptions[1].location = 1;
+   attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+   attributeDescriptions[1].offset = offsetof (Vertex, color);
+
+   return attributeDescriptions;
 }
