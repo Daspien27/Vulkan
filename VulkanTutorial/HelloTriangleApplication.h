@@ -64,6 +64,9 @@ private:
    VkCommandPool commandPool;
    std::vector<VkCommandBuffer> commandBuffers;
 
+   VkSemaphore imageAvailableSemaphore;
+   VkSemaphore renderFinishedSemaphore;
+
 public:
    HelloTriangleApplication ();
    ~HelloTriangleApplication ();
@@ -114,7 +117,10 @@ private:
    void createCommandPool ();
    void createCommandBuffers ();
 
+   void createSemaphores ();
+
    void mainLoop ();
+   void drawFrame ();
 
    void cleanup ();
 };
