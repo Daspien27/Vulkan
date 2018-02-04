@@ -56,7 +56,8 @@ private:
    VkExtent2D swapChainExtent;
    std::vector<VkImageView> swapChainImageViews;
 
-      VkPipelineLayout pipelineLayout;
+   VkRenderPass renderPass;
+   VkPipelineLayout pipelineLayout;
 
 public:
    HelloTriangleApplication ();
@@ -97,6 +98,8 @@ private:
    VkExtent2D chooseSwapExtent (const VkSurfaceCapabilitiesKHR& capabilities);
 
    void createImageViews ();
+
+   void createRenderPass ();
 
    void createGraphicsPipeline ();
    VkShaderModule createShaderModule (const std::vector<char>& code);
