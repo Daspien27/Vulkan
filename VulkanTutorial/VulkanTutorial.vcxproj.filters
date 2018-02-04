@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Shader Files">
+      <UniqueIdentifier>{bc7bd20b-a732-4b07-8f32-2ae22493d4fe}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -26,5 +29,16 @@
     <ClInclude Include="HelloTriangleApplication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\shader.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\shader.vert">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\compile_shaders.bat">
+      <Filter>Shader Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
