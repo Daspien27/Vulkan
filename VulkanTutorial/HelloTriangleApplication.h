@@ -61,6 +61,9 @@ private:
    VkPipelineLayout pipelineLayout;
    VkPipeline graphicsPipeline;
    
+   VkCommandPool commandPool;
+   std::vector<VkCommandBuffer> commandBuffers;
+
 public:
    HelloTriangleApplication ();
    ~HelloTriangleApplication ();
@@ -107,6 +110,9 @@ private:
    VkShaderModule createShaderModule (const std::vector<char>& code);
 
    void createFramebuffers ();
+
+   void createCommandPool ();
+   void createCommandBuffers ();
 
    void mainLoop ();
 
