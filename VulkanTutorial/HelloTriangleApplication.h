@@ -55,11 +55,12 @@ private:
    VkFormat swapChainImageFormat;
    VkExtent2D swapChainExtent;
    std::vector<VkImageView> swapChainImageViews;
+   std::vector<VkFramebuffer> swapChainFramebuffers;
 
    VkRenderPass renderPass;
    VkPipelineLayout pipelineLayout;
    VkPipeline graphicsPipeline;
-
+   
 public:
    HelloTriangleApplication ();
    ~HelloTriangleApplication ();
@@ -104,6 +105,8 @@ private:
 
    void createGraphicsPipeline ();
    VkShaderModule createShaderModule (const std::vector<char>& code);
+
+   void createFramebuffers ();
 
    void mainLoop ();
 
