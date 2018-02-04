@@ -96,6 +96,8 @@ private:
 
    void createImageViews ();
 
+   void createGraphicsPipeline ();
+
    void mainLoop ();
 
    void cleanup ();
