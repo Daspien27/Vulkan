@@ -86,6 +86,8 @@ public:
 private:
    void initWindow ();
 
+   static void onWindowResized (GLFWwindow* window, int width, int height);
+
    void initVulkan ();
    void createInstance ();
    
@@ -121,6 +123,9 @@ private:
 
    void mainLoop ();
    void drawFrame ();
+
+   void recreateSwapChain ();
+   void cleanupSwapChain ();
 
    void cleanup ();
 };
