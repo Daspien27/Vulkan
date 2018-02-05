@@ -74,6 +74,9 @@ private:
    VkPipelineLayout pipelineLayout;
    VkPipeline graphicsPipeline;
    
+   VkBuffer vertexBuffer;
+   VkDeviceMemory vertexBufferMemory;
+
    VkCommandPool commandPool;
    std::vector<VkCommandBuffer> commandBuffers;
 
@@ -139,6 +142,9 @@ private:
 
    void recreateSwapChain ();
    void cleanupSwapChain ();
+
+   void createVertexBuffer ();
+   uint32_t findMemoryType (uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
    void cleanup ();
 };
