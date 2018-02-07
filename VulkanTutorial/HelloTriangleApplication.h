@@ -33,12 +33,13 @@ struct QueueFamilyIndices
 {
    int graphicsFamily;
    int presentFamily;
+   int transferFamily;
 
-   QueueFamilyIndices () : graphicsFamily (-1) {}
+   QueueFamilyIndices () : graphicsFamily (-1), presentFamily(-1), transferFamily(-1) {}
 
    bool isComplete ()
    {
-      return graphicsFamily >= 0 && presentFamily >= 0;
+      return graphicsFamily >= 0 && presentFamily >= 0 && transferFamily >= 0;
    }
 };
 
@@ -62,6 +63,7 @@ private:
    VkDevice device;
    VkQueue graphicsQueue;
    VkQueue presentQueue;
+   VkQueue transferQueue;
 
    VkSwapchainKHR swapChain;
    std::vector<VkImage> swapChainImages;
@@ -77,8 +79,11 @@ private:
    VkBuffer vertexBuffer;
    VkDeviceMemory vertexBufferMemory;
 
-   VkCommandPool commandPool;
+   VkCommandPool commandPoolGraphics;
+   VkCommandPool commandPoolTransfer;
    std::vector<VkCommandBuffer> commandBuffers;
+
+
 
    VkSemaphore imageAvailableSemaphore;
    VkSemaphore renderFinishedSemaphore;
@@ -144,6 +149,9 @@ private:
    void cleanupSwapChain ();
 
    void createVertexBuffer ();
+   void createBuffer (VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+   void copyBuffer (VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
    uint32_t findMemoryType (uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
    void cleanup ();
