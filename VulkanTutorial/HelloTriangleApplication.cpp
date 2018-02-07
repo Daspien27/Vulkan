@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <numeric>
 #include <fstream>
+#include <chrono>
+
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -290,11 +292,13 @@ void HelloTriangleApplication::initVulkan ()
    createSwapChain ();
    createImageViews ();
    createRenderPass ();
+   createDescriptorSetLayout ();
    createGraphicsPipeline ();
    createFramebuffers ();
    createCommandPool ();
    createVertexBuffer ();
    createIndexBuffer ();
+   createUniformBuffer ();
    createCommandBuffers ();
    createSemaphores ();
 }
@@ -805,8 +809,8 @@ void HelloTriangleApplication::createGraphicsPipeline ()
 
    VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-   pipelineLayoutInfo.setLayoutCount = 0;
-   pipelineLayoutInfo.pSetLayouts = nullptr;
+   pipelineLayoutInfo.setLayoutCount = 1;
+   pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
    pipelineLayoutInfo.pushConstantRangeCount = 0;
    pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
@@ -1036,10 +1040,34 @@ void HelloTriangleApplication::mainLoop ()
    while (!glfwWindowShouldClose (window))
    {
       glfwPollEvents ();
+
+      updateUniformBuffer ();
       drawFrame ();
    }
 
    vkDeviceWaitIdle (device);
+}
+
+void HelloTriangleApplication::updateUniformBuffer ()
+{
+   static auto startTime = std::chrono::high_resolution_clock::now ();
+
+   auto currentTime = std::chrono::high_resolution_clock::now ();
+
+   float time = std::chrono::duration<float, std::chrono::seconds::period> (currentTime - startTime).count ();
+   UniformBufferObject ubo = {};
+   ubo.model = glm::rotate (glm::mat4 (1.0f), time * glm::radians (90.0f), glm::vec3 (0.0f, 0.0f, 1.0f));
+
+   ubo.view = glm::lookAt (glm::vec3 (2.0f, 2.0f, 2.0f), glm::vec3 (0.0f, 0.0f, 0.0f), glm::vec3 (0.0f, 0.0f, 1.0f));
+
+   ubo.proj = glm::perspective (glm::radians (45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
+   ubo.proj[1][1] *= -1; //glm is orignally designed for OpenGL which inverts its y-coordinate so we need to flip it
+
+   void* data;
+   vkMapMemory (device, uniformBufferMemory, 0, sizeof (ubo), 0, &data);
+   memcpy (data, &ubo, sizeof (ubo));
+   vkUnmapMemory (device, uniformBufferMemory);
+
 }
 
 void HelloTriangleApplication::drawFrame ()
@@ -1185,6 +1213,12 @@ void HelloTriangleApplication::createIndexBuffer ()
    vkFreeMemory (device, stagingBufferMemory, nullptr);
 }
 
+void HelloTriangleApplication::createUniformBuffer ()
+{
+   VkDeviceSize  bufferSize = sizeof (UniformBufferObject);
+   createBuffer (bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffer, uniformBufferMemory);
+}
+
 void HelloTriangleApplication::createBuffer (VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
 {
    VkBufferCreateInfo bufferInfo = {};
@@ -1259,6 +1293,27 @@ void HelloTriangleApplication::copyBuffer (VkBuffer srcBuffer, VkBuffer dstBuffe
    vkFreeCommandBuffers (device, commandPoolTransfer, 1, &commandBuffer);
 }
 
+void HelloTriangleApplication::createDescriptorSetLayout ()
+{
+   VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+   uboLayoutBinding.binding = 0;
+   uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+   uboLayoutBinding.descriptorCount = 1;
+
+   uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+   uboLayoutBinding.pImmutableSamplers = nullptr;
+
+   VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+   layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+   layoutInfo.bindingCount = 1;
+   layoutInfo.pBindings = &uboLayoutBinding;
+
+   if (vkCreateDescriptorSetLayout (device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
+   {
+      throw std::runtime_error ("failed to create descriptor set layout!");
+   }
+}
+
 uint32_t HelloTriangleApplication::findMemoryType (uint32_t typeFilter, VkMemoryPropertyFlags properties)
 {
    VkPhysicalDeviceMemoryProperties memProperties;
@@ -1278,6 +1333,11 @@ uint32_t HelloTriangleApplication::findMemoryType (uint32_t typeFilter, VkMemory
 void HelloTriangleApplication::cleanup ()
 {
    cleanupSwapChain ();
+
+   vkDestroyDescriptorSetLayout (device, descriptorSetLayout, nullptr);
+   
+   vkDestroyBuffer (device, uniformBuffer, nullptr);
+   vkFreeMemory (device, uniformBufferMemory, nullptr);
 
    vkDestroyBuffer (device, indexBuffer, nullptr);
    vkFreeMemory (device, indexBufferMemory, nullptr);

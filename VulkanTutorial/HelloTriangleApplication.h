@@ -7,7 +7,9 @@
 #define GLFW_INCLUDE_VULKAN //Includes <vulkan\vulkan.h> indicates that glfw is to load in Vulkan
 #include <GLFW/glfw3.h>
 
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 struct Vertex
 {
@@ -17,6 +19,13 @@ struct Vertex
    static VkVertexInputBindingDescription getBindingDescription();
    static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions ();
 
+};
+
+struct UniformBufferObject
+{
+   glm::mat4 model;
+   glm::mat4 view;
+   glm::mat4 proj;
 };
 
 VkResult CreateDebugReportCallbackEXT (
@@ -73,6 +82,7 @@ private:
    std::vector<VkFramebuffer> swapChainFramebuffers;
 
    VkRenderPass renderPass;
+   VkDescriptorSetLayout descriptorSetLayout;
    VkPipelineLayout pipelineLayout;
    VkPipeline graphicsPipeline;
    
@@ -80,6 +90,8 @@ private:
    VkDeviceMemory vertexBufferMemory;
    VkBuffer indexBuffer;
    VkDeviceMemory indexBufferMemory;
+   VkBuffer uniformBuffer;
+   VkDeviceMemory uniformBufferMemory;
 
    VkCommandPool commandPoolGraphics;
    VkCommandPool commandPoolTransfer;
@@ -145,6 +157,7 @@ private:
    void createSemaphores ();
 
    void mainLoop ();
+   void updateUniformBuffer ();
    void drawFrame ();
 
    void recreateSwapChain ();
@@ -152,9 +165,12 @@ private:
 
    void createVertexBuffer ();
    void createIndexBuffer ();
+   void createUniformBuffer ();
 
    void createBuffer (VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
    void copyBuffer (VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+   void createDescriptorSetLayout ();
 
    uint32_t findMemoryType (uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
