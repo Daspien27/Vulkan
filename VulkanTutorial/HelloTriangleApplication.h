@@ -1,10 +1,23 @@
 #pragma once
 
+#include <array>
+#include <vector>
+#include <set>
+
 #define GLFW_INCLUDE_VULKAN //Includes <vulkan\vulkan.h> indicates that glfw is to load in Vulkan
 #include <GLFW/glfw3.h>
 
-#include <vector>
-#include <set>
+#include <glm/glm.hpp>
+
+struct Vertex
+{
+   glm::vec2 pos;
+   glm::vec3 color;
+
+   static VkVertexInputBindingDescription getBindingDescription();
+   static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions ();
+
+};
 
 VkResult CreateDebugReportCallbackEXT (
    VkInstance instance,
@@ -20,12 +33,13 @@ struct QueueFamilyIndices
 {
    int graphicsFamily;
    int presentFamily;
+   int transferFamily;
 
-   QueueFamilyIndices () : graphicsFamily (-1) {}
+   QueueFamilyIndices () : graphicsFamily (-1), presentFamily(-1), transferFamily(-1) {}
 
    bool isComplete ()
    {
-      return graphicsFamily >= 0 && presentFamily >= 0;
+      return graphicsFamily >= 0 && presentFamily >= 0 && transferFamily >= 0;
    }
 };
 
@@ -49,6 +63,7 @@ private:
    VkDevice device;
    VkQueue graphicsQueue;
    VkQueue presentQueue;
+   VkQueue transferQueue;
 
    VkSwapchainKHR swapChain;
    std::vector<VkImage> swapChainImages;
@@ -61,8 +76,16 @@ private:
    VkPipelineLayout pipelineLayout;
    VkPipeline graphicsPipeline;
    
-   VkCommandPool commandPool;
+   VkBuffer vertexBuffer;
+   VkDeviceMemory vertexBufferMemory;
+   VkBuffer indexBuffer;
+   VkDeviceMemory indexBufferMemory;
+
+   VkCommandPool commandPoolGraphics;
+   VkCommandPool commandPoolTransfer;
    std::vector<VkCommandBuffer> commandBuffers;
+
+
 
    VkSemaphore imageAvailableSemaphore;
    VkSemaphore renderFinishedSemaphore;
@@ -126,6 +149,14 @@ private:
 
    void recreateSwapChain ();
    void cleanupSwapChain ();
+
+   void createVertexBuffer ();
+   void createIndexBuffer ();
+
+   void createBuffer (VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+   void copyBuffer (VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+   uint32_t findMemoryType (uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
    void cleanup ();
 };
