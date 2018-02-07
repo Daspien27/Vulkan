@@ -97,7 +97,8 @@ private:
    VkCommandPool commandPoolTransfer;
    std::vector<VkCommandBuffer> commandBuffers;
 
-
+   VkDescriptorPool descriptorPool;
+   VkDescriptorSet descriptorSet;
 
    VkSemaphore imageAvailableSemaphore;
    VkSemaphore renderFinishedSemaphore;
@@ -166,6 +167,9 @@ private:
    void createVertexBuffer ();
    void createIndexBuffer ();
    void createUniformBuffer ();
+
+   void createDescriptorPool ();
+   void createDescriptorSet ();
 
    void createBuffer (VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
    void copyBuffer (VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);

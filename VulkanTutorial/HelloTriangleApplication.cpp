@@ -299,6 +299,8 @@ void HelloTriangleApplication::initVulkan ()
    createVertexBuffer ();
    createIndexBuffer ();
    createUniformBuffer ();
+   createDescriptorPool ();
+   createDescriptorSet ();
    createCommandBuffers ();
    createSemaphores ();
 }
@@ -765,7 +767,7 @@ void HelloTriangleApplication::createGraphicsPipeline ()
    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
    rasterizer.lineWidth = 1.0f;
    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-   rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+   rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
    rasterizer.depthBiasEnable = VK_FALSE;
    rasterizer.depthBiasConstantFactor = 0.0f;
    rasterizer.depthBiasClamp = 0.0f;
@@ -950,6 +952,8 @@ void HelloTriangleApplication::createCommandBuffers ()
       vkCmdBeginRenderPass (commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
       vkCmdBindPipeline (commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+
+      vkCmdBindDescriptorSets (commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
       VkBuffer vertexBuffers[] = {vertexBuffer};
       VkDeviceSize offsets[] = {0};
@@ -1217,7 +1221,61 @@ void HelloTriangleApplication::createUniformBuffer ()
 {
    VkDeviceSize  bufferSize = sizeof (UniformBufferObject);
    createBuffer (bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffer, uniformBufferMemory);
-}
+}
+
+void HelloTriangleApplication::createDescriptorPool ()
+{
+   VkDescriptorPoolSize poolSize = {};
+   poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+   poolSize.descriptorCount = 1;
+
+   VkDescriptorPoolCreateInfo poolInfo = {};
+   poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+   poolInfo.poolSizeCount = 1;
+   poolInfo.pPoolSizes = &poolSize;
+   poolInfo.maxSets = 1;
+
+   if (vkCreateDescriptorPool (device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
+   {
+      throw std::runtime_error ("failed to create descriptor pool!");
+   }
+}
+
+void HelloTriangleApplication::createDescriptorSet ()
+{
+   VkDescriptorSetLayout layouts[] = {descriptorSetLayout};
+   VkDescriptorSetAllocateInfo allocInfo = {};
+   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+   allocInfo.descriptorPool = descriptorPool;
+   allocInfo.descriptorSetCount = 1;
+   allocInfo.pSetLayouts = layouts;
+
+   if (vkAllocateDescriptorSets (device, &allocInfo, &descriptorSet) != VK_SUCCESS)
+   {
+      throw std::runtime_error ("failed to allocate descriptor set!");
+   }
+
+   VkDescriptorBufferInfo bufferInfo = {};
+   bufferInfo.buffer = uniformBuffer;
+   bufferInfo.offset = 0;
+   bufferInfo.range = sizeof (UniformBufferObject);
+
+   VkWriteDescriptorSet descriptorWrite = {};
+   descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+   descriptorWrite.dstSet = descriptorSet;
+   descriptorWrite.dstBinding = 0;
+   descriptorWrite.dstArrayElement = 0;
+
+   descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+   descriptorWrite.descriptorCount = 1;
+
+   descriptorWrite.pBufferInfo = &bufferInfo;
+   descriptorWrite.pImageInfo = nullptr;
+   descriptorWrite.pTexelBufferView = nullptr;
+
+   vkUpdateDescriptorSets (device, 1, &descriptorWrite, 0, nullptr);
+}
+
 
 void HelloTriangleApplication::createBuffer (VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
 {
@@ -1333,6 +1391,8 @@ uint32_t HelloTriangleApplication::findMemoryType (uint32_t typeFilter, VkMemory
 void HelloTriangleApplication::cleanup ()
 {
    cleanupSwapChain ();
+
+   vkDestroyDescriptorPool (device, descriptorPool, nullptr);
 
    vkDestroyDescriptorSetLayout (device, descriptorSetLayout, nullptr);
    
