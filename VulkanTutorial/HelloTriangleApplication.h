@@ -8,13 +8,14 @@
 #include <GLFW/glfw3.h>
 
 #define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 
 struct Vertex
 {
-   glm::vec2 pos;
+   glm::vec3 pos;
    glm::vec3 color;
    glm::vec2 texCoord;
 
@@ -110,6 +111,10 @@ private:
    VkImageView textureImageView;
    VkSampler textureSampler;
 
+   VkImage depthImage;
+   VkDeviceMemory depthImageMemory;
+   VkImageView depthImageView;
+
 public:
    HelloTriangleApplication ();
    ~HelloTriangleApplication ();
@@ -152,7 +157,7 @@ private:
 
    void createImageViews ();
 
-   VkImageView createImageView (VkImage & image, VkFormat format);
+   VkImageView createImageView (VkImage & image, VkFormat format, VkImageAspectFlags aspectFlags);
 
    void createRenderPass ();
 
@@ -187,11 +192,16 @@ private:
 
    void createTextureImage ();
    void createImage (uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-   void transitionImageLayout (VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+   void transitionImageLayout (VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, VkCommandPool commandPool, VkQueue queue);
    void copyBufferToImage (VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
    void createTextureImageView ();
    void createTextureSampler ();
+
+   void createDepthResources ();
+   VkFormat findSupportedFormat (const std::vector<VkFormat>& candidates, VkImageTiling, VkFormatFeatureFlags features);
+   VkFormat findDepthFormat ();
+   bool hasStencilComponent (VkFormat format);
 
    uint32_t findMemoryType (uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
