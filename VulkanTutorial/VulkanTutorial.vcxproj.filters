@@ -19,6 +19,9 @@
     <Filter Include="Texture Files">
       <UniqueIdentifier>{2c1cd56d-34ad-469b-8878-89343cd02743}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Model Files">
+      <UniqueIdentifier>{cc8f99d5-e646-4293-89ed-f1653e33ea02}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -42,6 +45,9 @@
     </None>
     <None Include="shaders\compile_shaders.bat">
       <Filter>Shader Files</Filter>
+    </None>
+    <None Include="models\chalet.obj">
+      <Filter>Model Files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

@@ -261,3 +261,4 @@ __pycache__/
 *.pyc
 /VulkanTutorial/shaders/frag.spv
 /VulkanTutorial/shaders/vert.spv
+/VulkanTutorial/models/chalet.obj.zip
