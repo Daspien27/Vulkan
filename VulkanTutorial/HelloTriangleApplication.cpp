@@ -839,11 +839,7 @@ void HelloTriangleApplication::createGraphicsPipeline ()
    depthStencil.depthWriteEnable = VK_TRUE;
    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
    depthStencil.depthBoundsTestEnable = VK_FALSE;
-   depthStencil.minDepthBounds = 0.f;
-   depthStencil.maxDepthBounds = 1.0f;
    depthStencil.stencilTestEnable = VK_FALSE;
-   depthStencil.front = {};
-   depthStencil.back = {};
 
    VkDynamicState dynamicStates[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_LINE_WIDTH};
    VkPipelineDynamicStateCreateInfo dynamicState = {};
@@ -1444,9 +1440,9 @@ void HelloTriangleApplication::createTextureImage ()
 
    createImage (texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
 
-   transitionImageLayout (textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, commandPoolTransfer, transferQueue);
-
+   transitionImageLayout (textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, commandPoolGraphics, graphicsQueue);
    copyBufferToImage (stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+   transitionImageLayout (textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, commandPoolGraphics, graphicsQueue);
 
    vkDestroyBuffer (device, stagingBuffer, nullptr);
    vkFreeMemory (device, stagingBufferMemory, nullptr);
@@ -1534,7 +1530,7 @@ void HelloTriangleApplication::transitionImageLayout (VkImage image, VkFormat fo
    {
       barrier.srcAccessMask = 0;
       barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-      
+
       sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
       destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
    }
@@ -1542,7 +1538,7 @@ void HelloTriangleApplication::transitionImageLayout (VkImage image, VkFormat fo
    {
       barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
       barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-      
+
       sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
       destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
    }
@@ -1656,6 +1652,7 @@ VkFormat HelloTriangleApplication::findSupportedFormat (const std::vector<VkForm
       {
          return format;
       }
+
    }
    
    throw std::runtime_error ("failed to find supported format!");
@@ -1664,9 +1661,11 @@ VkFormat HelloTriangleApplication::findSupportedFormat (const std::vector<VkForm
 
 VkFormat HelloTriangleApplication::findDepthFormat ()
 {
-   return findSupportedFormat ({VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT}, 
-                               VK_IMAGE_TILING_OPTIMAL, 
-                               VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+   return findSupportedFormat (
+      {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+      VK_IMAGE_TILING_OPTIMAL,
+      VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+   );
 }
 
 bool HelloTriangleApplication::hasStencilComponent (VkFormat format)
