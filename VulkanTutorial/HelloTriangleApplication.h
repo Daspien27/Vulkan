@@ -11,6 +11,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+
 struct Vertex
 {
    glm::vec2 pos;
@@ -103,6 +104,9 @@ private:
    VkSemaphore imageAvailableSemaphore;
    VkSemaphore renderFinishedSemaphore;
 
+   VkImage textureImage;
+   VkDeviceMemory textureImageMemory;
+
 public:
    HelloTriangleApplication ();
    ~HelloTriangleApplication ();
@@ -176,7 +180,15 @@ private:
 
    void createDescriptorSetLayout ();
 
+   void createTextureImage ();
+   void createImage (uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+   void transitionImageLayout (VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+   void copyBufferToImage (VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+
    uint32_t findMemoryType (uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+   VkCommandBuffer beginSingleTimeCommands (VkCommandPool& commandPool);
+   void endSingleTimeCommands (VkCommandBuffer commandBuffer, VkCommandPool commandPool, VkQueue queue);
 
    void cleanup ();
 };

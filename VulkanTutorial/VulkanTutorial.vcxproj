@@ -70,7 +70,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\Users\Amund\Documents\Visual Studio 2017\Libraries\glfw-3.2.1.bin.WIN32\include;C:\Users\Amund\Documents\Visual Studio 2017\Libraries\glm-0.9.9-a2\;C:\VulkanSDK\1.0.65.1\Include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\Amund\Documents\Visual Studio 2017\Libraries\;C:\Users\Amund\Documents\Visual Studio 2017\Libraries\glfw-3.2.1.bin.WIN32\include;C:\Users\Amund\Documents\Visual Studio 2017\Libraries\glm-0.9.9-a2\;C:\VulkanSDK\1.0.65.1\Include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>C:\Users\Amund\Documents\Visual Studio 2017\Libraries\glfw-3.2.1.bin.WIN32\include;C:\Users\Amund\Documents\Visual Studio 2017\Libraries\glm-0.9.9-a2\;C:\VulkanSDK\1.0.65.1\Include;$(IncludePath)</IncludePath>
@@ -142,6 +142,9 @@
     <None Include="shaders\compile_shaders.bat" />
     <None Include="shaders\shader.frag" />
     <None Include="shaders\shader.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="textures\texture.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
