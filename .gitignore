@@ -265,3 +265,6 @@ __pycache__/
 /VulkanTutorialCpp/shaders/frag.spv
 /VulkanTutorialCpp/shaders/vert.spv
 /VulkanTutorialCpp/models/chalet.obj.zip
+/VulkanTutorialCpp/textures/fluffy-1.mtl
+/VulkanTutorialCpp/models/fluffy-1.stl
+/VulkanTutorialCpp/textures/purmesh.jpg

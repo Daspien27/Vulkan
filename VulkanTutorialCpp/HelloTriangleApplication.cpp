@@ -30,166 +30,15 @@ const bool enableValidationLayers = false
 const bool enableValidationLayers = true;
 #endif
 
-void checkValidationLayerSupport ()
+static void getRequiredGlfwExtensions (std::vector<const char *> &extensions)
 {
-   uint32_t layerCount;
-   vk::enumerateInstanceLayerProperties (&layerCount, nullptr);
-   std::vector<vk::LayerProperties> availableLayers (layerCount);
-   vk::enumerateInstanceLayerProperties (&layerCount, availableLayers.data ());
-
-   std::vector<std::string> MissingValidationLayers;
-   for (const auto& validationLayer : validationLayers)
-   {
-      auto matchExtension = [&] (const vk::LayerProperties& layerProp) { return strcmp (layerProp.layerName, validationLayer) == 0; };
-
-      auto findIfRequiredExtensionSupported = std::find_if (std::begin (availableLayers), std::end (availableLayers), matchExtension);
-
-      if (findIfRequiredExtensionSupported == std::end (availableLayers))
-      {
-         MissingValidationLayers.emplace_back (validationLayer);
-      }
-   }
-
-   if (!MissingValidationLayers.empty ())
-   {
-      throw std::runtime_error ("Validation layers requested, but not available! Missing: \r\n\t"
-                                + std::accumulate (std::next (MissingValidationLayers.begin ()), MissingValidationLayers.end (), MissingValidationLayers[0],
-                                                   [] (std::string accum, std::string next) { return accum + "\r\n\t" + next; }));
-   }
-}
-
-void PrintSupportedValidationLayers ()
-{
-   uint32_t layerCount;
-   vk::enumerateInstanceLayerProperties (&layerCount, nullptr);
-   std::vector<vk::LayerProperties> availableLayers (layerCount);
-   vk::enumerateInstanceLayerProperties (&layerCount, availableLayers.data ());
-
-   std::cout << "available validation layers: " << std::endl;
-
-   for (const auto& layer : availableLayers)
-   {
-      std::cout << "\t" << layer.layerName << std::endl;
-   }
-}
-
-void checkInstanceExtensionSupport (std::vector<const char *> RequiredExtensions)
-{
-   uint32_t supportedExtensionCount = 0;
-   vk::enumerateInstanceExtensionProperties (nullptr, &supportedExtensionCount, nullptr);
-   std::vector<vk::ExtensionProperties> SupportedExtensions (supportedExtensionCount);
-   vk::enumerateInstanceExtensionProperties (nullptr, &supportedExtensionCount, SupportedExtensions.data ());
-
-
-   std::vector<std::string> MissingExtensions;
-
-   for (const auto& RequiredExtension : RequiredExtensions)
-   {
-      auto matchExtension = [&] (const vk::ExtensionProperties& extensionProp) { return strcmp (extensionProp.extensionName, RequiredExtension) == 0; };
-
-      auto findIfRequiredExtensionSupported = std::find_if (std::begin (SupportedExtensions), std::end (SupportedExtensions), matchExtension);
-
-      if (findIfRequiredExtensionSupported == std::end (SupportedExtensions))
-      {
-         MissingExtensions.emplace_back (RequiredExtension);
-      }
-   }
-   if (!MissingExtensions.empty ())
-   {
-      throw std::runtime_error ("A required extension is not supported! Missing: \r\n\t"
-                                + std::accumulate (std::next (MissingExtensions.begin ()), MissingExtensions.end (), MissingExtensions[0],
-                                                   [] (std::string accum, std::string next) { return accum + "\r\n\t" + next; }));
-   }
-}
-
-void PrintSupportedInstanceExtensions ()
-{
-   uint32_t extensionCount = 0;
-   vk::enumerateInstanceExtensionProperties (nullptr, &extensionCount, nullptr);
-   std::vector<vk::ExtensionProperties> extensions (extensionCount);
-   vk::enumerateInstanceExtensionProperties (nullptr, &extensionCount, extensions.data ());
-
-   std::cout << "available extensions: " << std::endl;
-
-   for (const auto& extension : extensions)
-   {
-      std::cout << "\t" << extension.extensionName << std::endl;
-   }
-}
-
-std::vector<const char *> getRequiredExtensions ()
-{
-   std::vector<const char *> extensions;
-
    unsigned int glfwExtensionCount = 0;
    const char** glfwExtensions;
 
    glfwExtensions = glfwGetRequiredInstanceExtensions (&glfwExtensionCount);
 
    extensions.insert (extensions.end (), glfwExtensions, glfwExtensions + glfwExtensionCount);
-
-   if (enableValidationLayers)
-   {
-      extensions.push_back (VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-   }
-
-   return extensions;
 }
-
-void PrintAvailablePhysicalDevices (const vk::Instance instance)
-{
-   std::vector<vk::PhysicalDevice> devices = instance.enumeratePhysicalDevices ();
-
-   std::cout << "available physical devices: " << std::endl;
-
-   for (const auto& device : devices)
-   {
-      vk::PhysicalDeviceProperties deviceProperties = device.getProperties ();
-
-      std::cout << "\t" << deviceProperties.deviceName << std::endl;
-   }
-}
-
-VkResult CreateDebugReportCallbackEXT (VkInstance instance, const VkDebugReportCallbackCreateInfoEXT * pCreateInfo, const VkAllocationCallbacks * pAllocator, VkDebugReportCallbackEXT * pCallback)
-{
-   auto func = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr (instance, "vkCreateDebugReportCallbackEXT");
-   if (func != nullptr)
-   {
-      return func (instance, pCreateInfo, pAllocator, pCallback);
-   }
-   else
-   {
-      return VK_ERROR_EXTENSION_NOT_PRESENT;
-   }
-}
-
-void DestroyDebugReportCallbackEXT (
-   VkInstance instance,
-   VkDebugReportCallbackEXT callback,
-   const VkAllocationCallbacks * pAllocator)
-{
-   auto func = (PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr (instance, "vkDestroyDebugReportCallbackEXT");
-   if (func != nullptr)
-   {
-      func (instance, callback, pAllocator);
-   }
-}
-
-bool checkDeviceExtensionSupport (vk::PhysicalDevice device)
-{
-   std::vector<vk::ExtensionProperties> availableExtensions = device.enumerateDeviceExtensionProperties ();
-
-   std::set<std::string> requiredExtensions (deviceExtensions.begin (), deviceExtensions.end ());
-
-   for (const auto& extension : availableExtensions)
-   {
-      requiredExtensions.erase (extension.extensionName);
-   }
-
-   return requiredExtensions.empty ();
-}
-
-
 
 static std::vector<char> readFile (const std::string& filename)
 {
@@ -210,6 +59,7 @@ static std::vector<char> readFile (const std::string& filename)
 
    return buffer;
 }
+
 
 HelloTriangleApplication::HelloTriangleApplication ()
 {
@@ -260,13 +110,11 @@ void HelloTriangleApplication::onWindowResized (GLFWwindow * window, int width, 
 {
    if (width == 0 || height == 0) return;
 
-   HelloTriangleApplication* app = reinterpret_cast<HelloTriangleApplication*> (glfwGetWindowUserPointer (window));
+   auto app = reinterpret_cast<HelloTriangleApplication*> (glfwGetWindowUserPointer (window));
 
    app->recreateSwapChain ();
 
 }
-
-
 
 
 void HelloTriangleApplication::initVulkan ()
@@ -373,9 +221,9 @@ void HelloTriangleApplication::setupDebugCallback ()
          reinterpret_cast<VkDebugReportCallbackCreateInfoEXT*>(&createInfo),
          nullptr,
          reinterpret_cast<VkDebugReportCallbackEXT*>(&callback)) != VK_SUCCESS)
-         {
-            throw std::runtime_error ("failed to set up debug callback!");
-         }
+      {
+         throw std::runtime_error ("failed to set up debug callback!");
+      }
    }
 
 }
@@ -1156,9 +1004,9 @@ void HelloTriangleApplication::cleanupSwapChain ()
    device.destroyImage (depthImage, nullptr);
    device.freeMemory (depthImageMemory, nullptr);
 
-   for (size_t i = 0; i < swapChainFramebuffers.size (); ++i)
+   for (auto swapChainFramebuffer : swapChainFramebuffers)
    {
-      device.destroyFramebuffer (swapChainFramebuffers[i], nullptr);
+      device.destroyFramebuffer (swapChainFramebuffer, nullptr);
    }
 
    device.freeCommandBuffers (commandPoolGraphics, static_cast<uint32_t> (commandBuffers.size ()), commandBuffers.data ());
@@ -1169,9 +1017,9 @@ void HelloTriangleApplication::cleanupSwapChain ()
 
    device.destroyRenderPass (renderPass, nullptr);
 
-   for (size_t i = 0; i < swapChainImageViews.size (); ++i)
+   for (auto swapChainImageView : swapChainImageViews)
    {
-      device.destroyImageView (swapChainImageViews[i], nullptr);
+      device.destroyImageView (swapChainImageView, nullptr);
    }
 
    device.destroySwapchainKHR (swapChain, nullptr);
@@ -1746,6 +1594,147 @@ void HelloTriangleApplication::cleanup ()
    glfwDestroyWindow (window);
 
    glfwTerminate ();
+}
+
+VkResult HelloTriangleApplication::CreateDebugReportCallbackEXT (VkInstance instance, const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback)
+{
+   auto func = (PFN_vkCreateDebugReportCallbackEXT) vkGetInstanceProcAddr (instance,
+                                                                           "vkCreateDebugReportCallbackEXT");
+   if (func != nullptr)
+   {
+      return func (instance, pCreateInfo, pAllocator, pCallback);
+   }
+   else
+   {
+      return VK_ERROR_EXTENSION_NOT_PRESENT;
+   }
+}
+
+void HelloTriangleApplication::DestroyDebugReportCallbackEXT (VkInstance instance, VkDebugReportCallbackEXT callback, 
+                                                              const VkAllocationCallbacks* pAllocator)
+{
+   auto func = (PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr (instance,
+                                                                            "vkDestroyDebugReportCallbackEXT");
+   if (func != nullptr)
+   {
+      func (instance, callback, pAllocator);
+   }
+}
+
+bool HelloTriangleApplication::checkDeviceExtensionSupport (vk::PhysicalDevice device)
+{
+   auto availableExtensions = device.enumerateDeviceExtensionProperties ();
+
+   std::set<std::string> requiredExtensions (deviceExtensions.begin (), deviceExtensions.end ());
+
+   for (const auto& extension : availableExtensions)
+   {
+      requiredExtensions.erase (extension.extensionName);
+   }
+
+   return requiredExtensions.empty ();
+}
+
+std::vector<const char*> HelloTriangleApplication::getRequiredExtensions ()
+{
+   std::vector<const char *> extensions;
+
+   getRequiredGlfwExtensions (extensions);
+
+   if (enableValidationLayers)
+   {
+      extensions.push_back (VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+   }
+
+   return extensions;
+}
+
+void HelloTriangleApplication::checkValidationLayerSupport ()
+{
+   auto availableLayers = vk::enumerateInstanceLayerProperties ();
+
+   std::vector<std::string> MissingValidationLayers;
+   for (const auto& validationLayer : validationLayers)
+   {
+      auto matchExtension = [&] (const vk::LayerProperties& layerProp) { return strcmp (layerProp.layerName, validationLayer) == 0; };
+
+      auto findIfRequiredExtensionSupported = std::find_if (std::begin (availableLayers), std::end (availableLayers), matchExtension);
+
+      if (findIfRequiredExtensionSupported == std::end (availableLayers))
+      {
+         MissingValidationLayers.emplace_back (validationLayer);
+      }
+   }
+
+   if (!MissingValidationLayers.empty ())
+   {
+      throw std::runtime_error ("Validation layers requested, but not available! Missing: \r\n\t"
+                                + std::accumulate (std::next (MissingValidationLayers.begin ()), MissingValidationLayers.end (), MissingValidationLayers[0],
+                                                   [] (std::string accum, std::string next) { return accum + "\r\n\t" + next; }));
+   }
+}
+
+void HelloTriangleApplication::PrintSupportedValidationLayers ()
+{
+   auto availableLayers = vk::enumerateInstanceLayerProperties ();
+
+   std::cout << "available validation layers: " << std::endl;
+
+   for (const auto& layer : availableLayers)
+   {
+      std::cout << "\t" << layer.layerName << std::endl;
+   }
+}
+
+void HelloTriangleApplication::checkInstanceExtensionSupport (std::vector<const char *> RequiredExtensions)
+{
+   auto SupportedExtensions = vk::enumerateInstanceExtensionProperties (nullptr);
+
+   std::vector<std::string> MissingExtensions;
+
+   for (const auto& RequiredExtension : RequiredExtensions)
+   {
+      auto matchExtension = [&] (const vk::ExtensionProperties& extensionProp) { return strcmp (extensionProp.extensionName, RequiredExtension) == 0; };
+
+      auto findIfRequiredExtensionSupported = std::find_if (std::begin (SupportedExtensions), std::end (SupportedExtensions), matchExtension);
+
+      if (findIfRequiredExtensionSupported == std::end (SupportedExtensions))
+      {
+         MissingExtensions.emplace_back (RequiredExtension);
+      }
+   }
+   if (!MissingExtensions.empty ())
+   {
+      throw std::runtime_error ("A required extension is not supported! Missing: \r\n\t"
+                                + std::accumulate (std::next (MissingExtensions.begin ()), MissingExtensions.end (), MissingExtensions[0],
+                                                   [] (std::string accum, std::string next) { return accum + "\r\n\t" + next; }));
+   }
+}
+
+void HelloTriangleApplication::PrintSupportedInstanceExtensions ()
+{
+   auto extensions = vk::enumerateInstanceExtensionProperties (nullptr);
+
+   std::cout << "available extensions: " << std::endl;
+
+   for (const auto& extension : extensions)
+   {
+      std::cout << "\t" << extension.extensionName << std::endl;
+   }
+}
+
+void HelloTriangleApplication::PrintAvailablePhysicalDevices (const vk::Instance instance)
+{
+   auto devices = instance.enumeratePhysicalDevices ();
+
+   std::cout << "available physical devices: " << std::endl;
+
+   for (const auto& device : devices)
+   {
+      vk::PhysicalDeviceProperties deviceProperties = device.getProperties ();
+
+      std::cout << "\t" << deviceProperties.deviceName << std::endl;
+   }
 }
 
 vk::VertexInputBindingDescription Vertex::getBindingDescription ()

@@ -17,7 +17,6 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
-
 struct Vertex
 {
    glm::vec3 pos;
@@ -51,17 +50,6 @@ struct UniformBufferObject
    glm::mat4 proj;
 };
 
-VkResult CreateDebugReportCallbackEXT (
-   VkInstance instance,
-   const VkDebugReportCallbackCreateInfoEXT* pCreateInfo,
-   const VkAllocationCallbacks* pAllocator,
-   VkDebugReportCallbackEXT* pCallback);
-void DestroyDebugReportCallbackEXT (
-   VkInstance instance,
-   VkDebugReportCallbackEXT callback,
-   const VkAllocationCallbacks* pAllocator);
-
-
 struct QueueFamilyIndices
 {
    int graphicsFamily;
@@ -82,7 +70,6 @@ struct SwapChainSupportDetails
    std::vector<vk::SurfaceFormatKHR> formats;
    std::vector<vk::PresentModeKHR> presentModes;
 };
-
 
 class HelloTriangleApplication
 {
@@ -214,21 +201,26 @@ private:
    void createDescriptorPool ();
    void createDescriptorSet ();
 
-   void createBuffer (vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory);
+   void createBuffer (vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
+                      vk::Buffer& buffer, vk::DeviceMemory& bufferMemory);
    void copyBuffer (vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
 
    void createDescriptorSetLayout ();
 
    void createTextureImage ();
-   void createImage (uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Image& image, vk::DeviceMemory& imageMemory);
-   void transitionImageLayout (vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::CommandPool commandPool, vk::Queue queue);
+   void createImage (uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling,
+                     vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties,
+                     vk::Image& image, vk::DeviceMemory& imageMemory);
+   void transitionImageLayout (vk::Image image, vk::Format format, vk::ImageLayout oldLayout,
+                               vk::ImageLayout newLayout, vk::CommandPool commandPool, vk::Queue queue);
    void copyBufferToImage (vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
 
    void createTextureImageView ();
    void createTextureSampler ();
 
    void createDepthResources ();
-   vk::Format findSupportedFormat (const std::vector<vk::Format>& candidates, vk::ImageTiling, vk::FormatFeatureFlags features);
+   vk::Format findSupportedFormat (const std::vector<vk::Format>& candidates,
+                                   vk::ImageTiling, vk::FormatFeatureFlags features);
    vk::Format findDepthFormat ();
    bool hasStencilComponent (vk::Format format);
 
@@ -240,4 +232,27 @@ private:
    void endSingleTimeCommands (vk::CommandBuffer commandBuffer, vk::CommandPool commandPool, vk::Queue queue);
 
    void cleanup ();
+
+   VkResult CreateDebugReportCallbackEXT (VkInstance instance, const VkDebugReportCallbackCreateInfoEXT* pCreateInfo,
+                                          const VkAllocationCallbacks* pAllocator, VkDebugReportCallbackEXT* pCallback);
+   void DestroyDebugReportCallbackEXT (VkInstance instance, VkDebugReportCallbackEXT callback,
+                                       const VkAllocationCallbacks* pAllocator);
+
+   bool checkDeviceExtensionSupport (vk::PhysicalDevice device);
+
+   std::vector<const char*> getRequiredExtensions ();
+
+   void checkValidationLayerSupport ();
+
+   void PrintSupportedValidationLayers ();
+
+   void checkInstanceExtensionSupport (std::vector<const char *> RequiredExtensions);
+
+   void PrintSupportedInstanceExtensions ();
+
+   void PrintAvailablePhysicalDevices (const vk::Instance instance);
+
 };
+
+
+
