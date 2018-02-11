@@ -7,6 +7,8 @@
 #define GLFW_INCLUDE_VULKAN //Includes <vulkan\vulkan.h> indicates that glfw is to load in Vulkan
 #include <GLFW/glfw3.h>
 
+#include <vulkan\vulkan.hpp>
+
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
@@ -22,8 +24,8 @@ struct Vertex
    glm::vec3 color;
    glm::vec2 texCoord;
 
-   static VkVertexInputBindingDescription getBindingDescription();
-   static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions ();
+   static vk::VertexInputBindingDescription getBindingDescription ();
+   static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptions ();
 
    bool operator == (const Vertex& other) const
    {
@@ -59,13 +61,14 @@ void DestroyDebugReportCallbackEXT (
    VkDebugReportCallbackEXT callback,
    const VkAllocationCallbacks* pAllocator);
 
+
 struct QueueFamilyIndices
 {
    int graphicsFamily;
    int presentFamily;
    int transferFamily;
 
-   QueueFamilyIndices () : graphicsFamily (-1), presentFamily(-1), transferFamily(-1) {}
+   QueueFamilyIndices () : graphicsFamily (-1), presentFamily (-1), transferFamily (-1) {}
 
    bool isComplete ()
    {
@@ -75,9 +78,9 @@ struct QueueFamilyIndices
 
 struct SwapChainSupportDetails
 {
-   VkSurfaceCapabilitiesKHR capabilities;
-   std::vector<VkSurfaceFormatKHR> formats;
-   std::vector<VkPresentModeKHR> presentModes;
+   vk::SurfaceCapabilitiesKHR capabilities;
+   std::vector<vk::SurfaceFormatKHR> formats;
+   std::vector<vk::PresentModeKHR> presentModes;
 };
 
 
@@ -85,57 +88,59 @@ class HelloTriangleApplication
 {
 private:
 
-   GLFWwindow* window;
-   VkInstance instance;
-   VkDebugReportCallbackEXT callback;
-   VkSurfaceKHR surface;
-   VkPhysicalDevice physicalDevice;
-   VkDevice device;
-   VkQueue graphicsQueue;
-   VkQueue presentQueue;
-   VkQueue transferQueue;
+   GLFWwindow * window;
+   vk::Instance instance;
+   vk::DebugReportCallbackEXT callback;
+   vk::DebugReportCallbackEXT debugReport;
 
-   VkSwapchainKHR swapChain;
-   std::vector<VkImage> swapChainImages;
-   VkFormat swapChainImageFormat;
-   VkExtent2D swapChainExtent;
-   std::vector<VkImageView> swapChainImageViews;
-   std::vector<VkFramebuffer> swapChainFramebuffers;
+   vk::SurfaceKHR surface;
+   vk::PhysicalDevice physicalDevice;
+   vk::Device device;
+   vk::Queue graphicsQueue;
+   vk::Queue presentQueue;
+   vk::Queue transferQueue;
 
-   VkRenderPass renderPass;
-   VkDescriptorSetLayout descriptorSetLayout;
-   VkPipelineLayout pipelineLayout;
-   VkPipeline graphicsPipeline;
-   
+   vk::SwapchainKHR swapChain;
+   std::vector<vk::Image> swapChainImages;
+   vk::Format swapChainImageFormat;
+   vk::Extent2D swapChainExtent;
+   std::vector<vk::ImageView> swapChainImageViews;
+   std::vector<vk::Framebuffer> swapChainFramebuffers;
+
+   vk::RenderPass renderPass;
+   vk::DescriptorSetLayout descriptorSetLayout;
+   vk::PipelineLayout pipelineLayout;
+   vk::Pipeline graphicsPipeline;
+
    std::vector<Vertex> vertices;
    std::vector<uint32_t> indices;
-   VkBuffer vertexBuffer;
-   VkDeviceMemory vertexBufferMemory;
+   vk::Buffer vertexBuffer;
+   vk::DeviceMemory vertexBufferMemory;
 
-   VkBuffer indexBuffer;
-   VkDeviceMemory indexBufferMemory;
+   vk::Buffer indexBuffer;
+   vk::DeviceMemory indexBufferMemory;
 
-   VkBuffer uniformBuffer;
-   VkDeviceMemory uniformBufferMemory;
+   vk::Buffer uniformBuffer;
+   vk::DeviceMemory uniformBufferMemory;
 
-   VkCommandPool commandPoolGraphics;
-   VkCommandPool commandPoolTransfer;
-   std::vector<VkCommandBuffer> commandBuffers;
+   vk::CommandPool commandPoolGraphics;
+   vk::CommandPool commandPoolTransfer;
+   std::vector<vk::CommandBuffer> commandBuffers;
 
-   VkDescriptorPool descriptorPool;
-   VkDescriptorSet descriptorSet;
+   vk::DescriptorPool descriptorPool;
+   vk::DescriptorSet descriptorSet;
 
-   VkSemaphore imageAvailableSemaphore;
-   VkSemaphore renderFinishedSemaphore;
+   vk::Semaphore imageAvailableSemaphore;
+   vk::Semaphore renderFinishedSemaphore;
 
-   VkImage textureImage;
-   VkDeviceMemory textureImageMemory;
-   VkImageView textureImageView;
-   VkSampler textureSampler;
+   vk::Image textureImage;
+   vk::DeviceMemory textureImageMemory;
+   vk::ImageView textureImageView;
+   vk::Sampler textureSampler;
 
-   VkImage depthImage;
-   VkDeviceMemory depthImageMemory;
-   VkImageView depthImageView;
+   vk::Image depthImage;
+   vk::DeviceMemory depthImageMemory;
+   vk::ImageView depthImageView;
 
 
 
@@ -162,31 +167,31 @@ private:
 
    void initVulkan ();
    void createInstance ();
-   
+
    void setupDebugCallback ();
-   
+
    void createSurface ();
 
    void pickPhysicalDevice ();
-   bool isDeviceSuitable (VkPhysicalDevice device);
-   QueueFamilyIndices findQueueFamilies (VkPhysicalDevice device);
-   
+   bool isDeviceSuitable (vk::PhysicalDevice device);
+   QueueFamilyIndices findQueueFamilies (vk::PhysicalDevice device);
+
    void createLogicalDevice ();
 
    void createSwapChain ();
-   SwapChainSupportDetails querySwapChainSupport (VkPhysicalDevice device);
-   VkSurfaceFormatKHR chooseSwapSurfaceFormat (const std::vector<VkSurfaceFormatKHR>& availableFormats);
-   VkPresentModeKHR chooseSwapPresentMode (const std::vector<VkPresentModeKHR>& availablePresentModes);
-   VkExtent2D chooseSwapExtent (const VkSurfaceCapabilitiesKHR& capabilities);
+   SwapChainSupportDetails querySwapChainSupport (vk::PhysicalDevice device);
+   vk::SurfaceFormatKHR chooseSwapSurfaceFormat (const std::vector<vk::SurfaceFormatKHR>& availableFormats);
+   vk::PresentModeKHR chooseSwapPresentMode (const std::vector<vk::PresentModeKHR>& availablePresentModes);
+   vk::Extent2D chooseSwapExtent (const vk::SurfaceCapabilitiesKHR& capabilities);
 
    void createImageViews ();
 
-   VkImageView createImageView (VkImage & image, VkFormat format, VkImageAspectFlags aspectFlags);
+   vk::ImageView createImageView (vk::Image & image, vk::Format format, vk::ImageAspectFlags aspectFlags);
 
    void createRenderPass ();
 
    void createGraphicsPipeline ();
-   VkShaderModule createShaderModule (const std::vector<char>& code);
+   vk::ShaderModule createShaderModule (const std::vector<char>& code);
 
    void createFramebuffers ();
 
@@ -209,30 +214,30 @@ private:
    void createDescriptorPool ();
    void createDescriptorSet ();
 
-   void createBuffer (VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-   void copyBuffer (VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+   void createBuffer (vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory);
+   void copyBuffer (vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
 
    void createDescriptorSetLayout ();
 
    void createTextureImage ();
-   void createImage (uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-   void transitionImageLayout (VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, VkCommandPool commandPool, VkQueue queue);
-   void copyBufferToImage (VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+   void createImage (uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties, vk::Image& image, vk::DeviceMemory& imageMemory);
+   void transitionImageLayout (vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::CommandPool commandPool, vk::Queue queue);
+   void copyBufferToImage (vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
 
    void createTextureImageView ();
    void createTextureSampler ();
 
    void createDepthResources ();
-   VkFormat findSupportedFormat (const std::vector<VkFormat>& candidates, VkImageTiling, VkFormatFeatureFlags features);
-   VkFormat findDepthFormat ();
-   bool hasStencilComponent (VkFormat format);
+   vk::Format findSupportedFormat (const std::vector<vk::Format>& candidates, vk::ImageTiling, vk::FormatFeatureFlags features);
+   vk::Format findDepthFormat ();
+   bool hasStencilComponent (vk::Format format);
 
    void loadModel ();
 
-   uint32_t findMemoryType (uint32_t typeFilter, VkMemoryPropertyFlags properties);
+   uint32_t findMemoryType (uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 
-   VkCommandBuffer beginSingleTimeCommands (VkCommandPool& commandPool);
-   void endSingleTimeCommands (VkCommandBuffer commandBuffer, VkCommandPool commandPool, VkQueue queue);
+   vk::CommandBuffer beginSingleTimeCommands (vk::CommandPool& commandPool);
+   void endSingleTimeCommands (vk::CommandBuffer commandBuffer, vk::CommandPool commandPool, vk::Queue queue);
 
    void cleanup ();
 };

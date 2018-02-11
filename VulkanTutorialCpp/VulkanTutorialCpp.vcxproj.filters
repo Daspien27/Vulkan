@@ -24,10 +24,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="HelloTriangleApplication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HelloTriangleApplication.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -37,20 +37,25 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\compile_shaders.bat">
+      <Filter>Shader Files</Filter>
+    </None>
     <None Include="shaders\shader.frag">
       <Filter>Shader Files</Filter>
     </None>
     <None Include="shaders\shader.vert">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="shaders\compile_shaders.bat">
-      <Filter>Shader Files</Filter>
-    </None>
-    <None Include="models\chalet.obj">
-      <Filter>Model Files</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
+    <Object Include="models\chalet.obj">
+      <Filter>Model Files</Filter>
+    </Object>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="textures\chalet.jpg">
+      <Filter>Texture Files</Filter>
+    </Image>
     <Image Include="textures\texture.jpg">
       <Filter>Texture Files</Filter>
     </Image>
