@@ -14,20 +14,20 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobj\tiny_obj_loader.h>
 
-const int WIDTH = 800;
-const int HEIGHT = 600;
+static const int WIDTH = 800;
+static const int HEIGHT = 600;
 
-const std::string MODEL_PATH = "models/chalet.obj";
-const std::string TEXTURE_PATH = "textures/chalet.jpg";
+static const std::string MODEL_PATH = "models/fluffy-1.obj";
+static const std::string TEXTURE_PATH = "textures/purmesh.jpg";
 
-const std::vector<const char*> validationLayers = {"VK_LAYER_LUNARG_standard_validation"};
+static const std::vector<const char*> validationLayers = {"VK_LAYER_LUNARG_standard_validation"};
 
-const std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+static const std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 #ifdef NDEBUG
-const bool enableValidationLayers = false
+static const bool enableValidationLayers = false
 #else
-const bool enableValidationLayers = true;
+static const bool enableValidationLayers = true;
 #endif
 
 static void getRequiredGlfwExtensions (std::vector<const char *> &extensions)
@@ -49,7 +49,7 @@ static std::vector<char> readFile (const std::string& filename)
       throw std::runtime_error ("failed to open file!");
    }
 
-   size_t fileSize = (size_t) file.tellg ();
+   auto fileSize = (size_t) file.tellg ();
    std::vector<char> buffer (fileSize);
 
    file.seekg (0);
@@ -132,9 +132,7 @@ void HelloTriangleApplication::initVulkan ()
    createCommandPool ();
    createDepthResources ();
    createFramebuffers ();
-   createTextureImage ();
-   createTextureImageView ();
-   createTextureSampler ();
+   createTexture ();
    loadModel ();
    createVertexBuffer ();
    createIndexBuffer ();
@@ -143,6 +141,13 @@ void HelloTriangleApplication::initVulkan ()
    createDescriptorSet ();
    createCommandBuffers ();
    createSemaphores ();
+}
+
+void HelloTriangleApplication::createTexture ()
+{
+   createTextureImage ();
+   createTextureImageView ();
+   createTextureSampler ();
 }
 
 void HelloTriangleApplication::createInstance ()
@@ -351,21 +356,20 @@ void HelloTriangleApplication::createSwapChain ()
 
    vk::SwapchainCreateInfoKHR createInfo = {};
 
-   createInfo.surface = surface;
-
-   createInfo.minImageCount = imageCount;
-   createInfo.imageFormat = surfaceFormat.format;
-   createInfo.imageColorSpace = surfaceFormat.colorSpace;
-   createInfo.imageExtent = extent;
-   createInfo.imageArrayLayers = 1; //Always 1 for Non-Stereoscopic
-   createInfo.imageUsage = vk::ImageUsageFlagBits::eColorAttachment;
+   createInfo.setSurface (surface);
+   createInfo.setMinImageCount (imageCount);
+   createInfo.setImageFormat (surfaceFormat.format);
+   createInfo.setImageColorSpace (surfaceFormat.colorSpace);
+   createInfo.setImageExtent (extent);
+   createInfo.setImageArrayLayers (1); //Always 1 for Non-Stereoscopic
+   createInfo.setImageUsage (vk::ImageUsageFlagBits::eColorAttachment);
 
    QueueFamilyIndices indices = findQueueFamilies (physicalDevice);
    uint32_t queueFamilyIndices[] = {(uint32_t) indices.graphicsFamily, (uint32_t) indices.presentFamily, (uint32_t) indices.transferFamily};
 
    if (indices.graphicsFamily != indices.presentFamily)
    {
-      createInfo.imageSharingMode = vk::SharingMode::eConcurrent;
+      createInfo.setImageSharingMode (vk::SharingMode::eConcurrent);
       createInfo.queueFamilyIndexCount = 3;
       createInfo.pQueueFamilyIndices = queueFamilyIndices;
    }
@@ -467,24 +471,25 @@ void HelloTriangleApplication::createImageViews ()
 vk::ImageView HelloTriangleApplication::createImageView (vk::Image & image, vk::Format format, vk::ImageAspectFlags aspectFlags)
 {
    vk::ImageViewCreateInfo viewInfo = {};
-   viewInfo.image = image;
+   viewInfo.setImage (image);
 
-   viewInfo.viewType = vk::ImageViewType::e2D;
-   viewInfo.format = format;
+   viewInfo.setViewType (vk::ImageViewType::e2D);
+   viewInfo.setFormat (format);
 
-   viewInfo.components.r = vk::ComponentSwizzle::eIdentity;
-   viewInfo.components.g = vk::ComponentSwizzle::eIdentity;
-   viewInfo.components.b = vk::ComponentSwizzle::eIdentity;
-   viewInfo.components.r = vk::ComponentSwizzle::eIdentity;
+   vk::ComponentMapping componentMapping = {};
+   viewInfo.setComponents (componentMapping);
 
-   viewInfo.subresourceRange.aspectMask = aspectFlags;
-   viewInfo.subresourceRange.baseMipLevel = 0;
-   viewInfo.subresourceRange.levelCount = 1;
-   viewInfo.subresourceRange.baseArrayLayer = 0;
-   viewInfo.subresourceRange.layerCount = 1;
+   vk::ImageSubresourceRange subresourceRange {aspectFlags , 0, 1, 0, 1};
+   viewInfo.setSubresourceRange (subresourceRange);
+
 
    vk::ImageView imageView;
-   if (device.createImageView (&viewInfo, nullptr, &imageView) != vk::Result::eSuccess)
+
+   try
+   {
+      imageView = device.createImageView (viewInfo, nullptr);
+   }
+   catch (std::exception const &e)
    {
       throw std::runtime_error ("failed to create image view!");
    }
@@ -495,30 +500,30 @@ vk::ImageView HelloTriangleApplication::createImageView (vk::Image & image, vk::
 void HelloTriangleApplication::createRenderPass ()
 {
    vk::AttachmentDescription colorAttachment = {};
-   colorAttachment.format = swapChainImageFormat;
-   colorAttachment.samples = vk::SampleCountFlagBits::e1;
-   colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
-   colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
+   colorAttachment.setFormat (swapChainImageFormat);
+   colorAttachment.setSamples (vk::SampleCountFlagBits::e1);
+   colorAttachment.setLoadOp (vk::AttachmentLoadOp::eClear);
+   colorAttachment.setStoreOp (vk::AttachmentStoreOp::eStore);
 
-   colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
-   colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+   colorAttachment.setStencilLoadOp (vk::AttachmentLoadOp::eDontCare);
+   colorAttachment.setStencilStoreOp (vk::AttachmentStoreOp::eDontCare);
 
-   colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
-   colorAttachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;
+   colorAttachment.setInitialLayout (vk::ImageLayout::eUndefined);
+   colorAttachment.setFinalLayout (vk::ImageLayout::ePresentSrcKHR);
 
    vk::AttachmentReference colorAttachmentRef = {};
    colorAttachmentRef.attachment = 0;
    colorAttachmentRef.layout = vk::ImageLayout::eColorAttachmentOptimal;
 
    vk::AttachmentDescription depthAttachment = {};
-   depthAttachment.format = findDepthFormat ();
-   depthAttachment.samples = vk::SampleCountFlagBits::e1;
-   depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
-   depthAttachment.storeOp = vk::AttachmentStoreOp::eDontCare;
-   depthAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
-   depthAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-   depthAttachment.initialLayout = vk::ImageLayout::eUndefined;
-   depthAttachment.finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+   depthAttachment.setFormat (findDepthFormat ());
+   depthAttachment.setSamples (vk::SampleCountFlagBits::e1);
+   depthAttachment.setLoadOp = vk::AttachmentLoadOp::eClear;
+   depthAttachment.setStoreOp = vk::AttachmentStoreOp::eDontCare;
+   depthAttachment.setStencilLoadOp = vk::AttachmentLoadOp::eDontCare;
+   depthAttachment.setStencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+   depthAttachment.setInitialLayout = vk::ImageLayout::eUndefined;
+   depthAttachment.setFinalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
    vk::AttachmentReference depthAttachmentRef = {};
    depthAttachmentRef.attachment = 1;
@@ -1499,6 +1504,25 @@ void HelloTriangleApplication::loadModel ()
       }
    }
 
+
+   //Normalize models
+   float maxCoord = 0.0f;
+   for (auto& Vert : vertices)
+   {
+      float maxInVert = std::max ({std::abs (Vert.pos.x), std::abs (Vert.pos.y), std::abs (Vert.pos.z)});
+
+      if (maxInVert > maxCoord)
+      {
+         maxCoord = maxInVert;
+      }
+   }
+
+   for (auto& Vert : vertices)
+   {
+      Vert.pos /= maxCoord;
+   }
+
+
    std::cout << "Model loaded." << std::endl;
 }
 
@@ -1610,7 +1634,7 @@ VkResult HelloTriangleApplication::CreateDebugReportCallbackEXT (VkInstance inst
    }
 }
 
-void HelloTriangleApplication::DestroyDebugReportCallbackEXT (VkInstance instance, VkDebugReportCallbackEXT callback, 
+void HelloTriangleApplication::DestroyDebugReportCallbackEXT (VkInstance instance, VkDebugReportCallbackEXT callback,
                                                               const VkAllocationCallbacks* pAllocator)
 {
    auto func = (PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr (instance,

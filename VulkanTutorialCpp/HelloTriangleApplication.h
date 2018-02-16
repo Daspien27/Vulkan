@@ -153,6 +153,9 @@ private:
    static void onWindowResized (GLFWwindow* window, int width, int height);
 
    void initVulkan ();
+
+   void createTexture ();
+
    void createInstance ();
 
    void setupDebugCallback ();
